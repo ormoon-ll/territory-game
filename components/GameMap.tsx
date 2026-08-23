@@ -24,8 +24,12 @@ type SavedTerritory = {
   closing_distance_m: number;
 
   created_at: string;
-};
 
+  profiles: {
+    username: string;
+    player_color: string;
+  } | null;
+};
 function calculateDistanceMeters(
   pointA: GPSPoint,
   pointB: GPSPoint
@@ -205,7 +209,7 @@ export default function GameMap() {
   return true;
 }
   
-  async function loadTerritories() {
+async function loadTerritories() {
   if (!googleMapRef.current) {
     return;
   }
@@ -225,11 +229,25 @@ export default function GameMap() {
     error,
   } = await supabase
     .from("territories")
-    .select("*")
-    .eq("owner_id", user.id)
-    .order("created_at", {
-      ascending: true,
-    });
+    .select(`
+      id,
+      owner_id,
+      points,
+      area_m2,
+      route_distance_m,
+      closing_distance_m,
+      created_at,
+      profiles!territories_owner_profile_fkey (
+        username,
+        player_color
+      )
+    `)
+    .order(
+      "created_at",
+      {
+        ascending: true,
+      }
+    );
 
   if (error) {
     console.error(
@@ -241,14 +259,14 @@ export default function GameMap() {
   }
 
   const territories =
-    data as SavedTerritory[];
+    data as unknown as SavedTerritory[];
 
   console.log(
-    "Loaded territories:",
+    "All territories:",
     territories
   );
 
-  // Remove old polygons from map first
+  // Remove polygons already on screen
   territoryPolygonsRef.current.forEach(
     (polygon) => {
       polygon.setMap(null);
@@ -258,27 +276,56 @@ export default function GameMap() {
   territoryPolygonsRef.current = [];
 
   territories.forEach(
-    (territory) => {
-      const polygon =
-        new google.maps.Polygon({
-          paths: territory.points,
+  (territory) => {
+    const color =
+      territory.profiles
+        ?.player_color ||
+      "#64748B";
 
-          strokeColor: "#2563EB",
-          strokeOpacity: 1,
-          strokeWeight: 3,
+    const username =
+      territory.profiles
+        ?.username ||
+      "Unknown Player";
 
-          fillColor: "#2563EB",
-          fillOpacity: 0.3,
+    const polygon =
+      new google.maps.Polygon({
+        paths:
+          territory.points,
 
-          map:
-            googleMapRef.current,
-        });
+        strokeColor: color,
 
-      territoryPolygonsRef.current.push(
-        polygon
-      );
-    }
-  );
+        strokeOpacity:
+          1,
+
+        strokeWeight:
+          3,
+
+        fillColor:
+          color,
+
+        fillOpacity:
+          0.3,
+
+        map:
+          googleMapRef.current,
+      });
+
+    polygon.addListener(
+      "click",
+      () => {
+        setMessage(
+          `👑 ${username} owns ${Math.round(
+            territory.area_m2
+          )} m²`
+        );
+      }
+    );
+
+    territoryPolygonsRef.current.push(
+      polygon
+    );
+  }
+);
 }
   const mapRef = useRef<HTMLDivElement | null>(null);
 
@@ -783,7 +830,46 @@ const [distanceFromStart, setDistanceFromStart] =
 
     return;
   }
+const [playerColor, setPlayerColor] =
+  useState("#2563EB");
+  async function loadPlayerProfile() {
+  const {
+    data: {
+      user,
+    },
+  } = await supabase.auth.getUser();
 
+  if (!user) {
+    return;
+  }
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("profiles")
+    .select(
+      "username, player_color"
+    )
+    .eq(
+      "id",
+      user.id
+    )
+    .single();
+
+  if (error) {
+    console.error(
+      "Unable to load profile:",
+      error
+    );
+
+    return;
+  }
+
+  setPlayerColor(
+    data.player_color
+  );
+}
   // ------------------------------
   // RULE 5
   // Calculate captured area
@@ -1034,3 +1120,8 @@ if (!saved) {
     </div>
   );
 }
+
+
+
+
+
