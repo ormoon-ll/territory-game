@@ -97,19 +97,35 @@ export default function GamePage() {
           </span>
         </button>
 
-        <button className="text-gray-400">
-          <div className="text-xl">🏆</div>
-          <span className="text-xs">
-            Rank
-          </span>
-        </button>
+        <button
+  onClick={() =>
+    router.push("/rank")
+  }
+  className="text-gray-400"
+>
+  <div className="text-xl">
+    🏆
+  </div>
 
-        <button className="text-gray-400">
-          <div className="text-xl">👤</div>
-          <span className="text-xs">
-            Profile
-          </span>
-        </button>
+  <span className="text-xs">
+    Rank
+  </span>
+</button>
+
+      <button
+  onClick={() =>
+    router.push("/profile")
+  }
+  className="text-gray-400"
+>
+  <div className="text-xl">
+    👤
+  </div>
+
+  <span className="text-xs">
+    Profile
+  </span>
+</button>
 
       </nav>
 
