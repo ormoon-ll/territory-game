@@ -26,9 +26,10 @@ type SavedTerritory = {
   created_at: string;
 
   profiles: {
-    username: string;
-    player_color: string;
-  } | null;
+  username: string;
+  player_color: string;
+  show_username: boolean;
+} | null;
 };
 function calculateDistanceMeters(
   pointA: GPSPoint,
@@ -238,9 +239,10 @@ async function loadTerritories() {
       closing_distance_m,
       created_at,
       profiles!territories_owner_profile_fkey (
-        username,
-        player_color
-      )
+  username,
+  player_color,
+  show_username
+)
     `)
     .order(
       "created_at",
@@ -283,9 +285,9 @@ async function loadTerritories() {
       "#64748B";
 
     const username =
-      territory.profiles
-        ?.username ||
-      "Unknown Player";
+  territory.profiles?.show_username
+    ? territory.profiles.username
+    : "Anonymous";
 
     const polygon =
       new google.maps.Polygon({
