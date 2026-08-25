@@ -45,6 +45,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-6">
       <div className="w-full max-w-md">
+
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">
             🌍
@@ -63,6 +64,7 @@ export default function LoginPage() {
           onSubmit={handleLogin}
           className="bg-slate-900 p-7 rounded-2xl space-y-5"
         >
+
           <div>
             <label className="block text-gray-300 mb-2">
               Email
@@ -95,6 +97,15 @@ export default function LoginPage() {
               placeholder="••••••••"
               className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white outline-none focus:border-blue-500"
             />
+
+            <div className="text-right mt-2">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-400 hover:text-blue-300 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {errorMessage && (
@@ -106,9 +117,11 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 rounded-xl"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 rounded-xl transition"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading
+              ? "Logging in..."
+              : "Login"}
           </button>
         </form>
 
@@ -121,6 +134,7 @@ export default function LoginPage() {
             Create Account
           </Link>
         </p>
+
       </div>
     </main>
   );
