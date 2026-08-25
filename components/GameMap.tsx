@@ -136,7 +136,7 @@ function calculatePolygonArea(
 const MIN_ROUTE_DISTANCE = 40;
 const MAX_ROUTE_DISTANCE = 1500;
 
-const MAX_DISTANCE_FROM_START = 20;
+const MAX_DISTANCE_FROM_START = 35;
 
 const MIN_CAPTURE_POINTS = 5;
 
@@ -381,6 +381,48 @@ async function loadTerritories() {
 const [distanceFromStart, setDistanceFromStart] =
   useState<number | null>(null);
 
+  const [, setPlayerColor] =
+    useState("#2563EB");
+
+  async function loadPlayerProfile() {
+    const {
+      data: {
+        user,
+      },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return;
+    }
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("profiles")
+      .select(
+        "username, player_color"
+      )
+      .eq(
+        "id",
+        user.id
+      )
+      .single();
+
+    if (error) {
+      console.error(
+        "Unable to load profile:",
+        error
+      );
+
+      return;
+    }
+
+    setPlayerColor(
+      data.player_color
+    );
+  }
+
   useEffect(() => {
     async function initializeMap() {
       const apiKey =
@@ -430,6 +472,8 @@ const [distanceFromStart, setDistanceFromStart] =
       );
 
       googleMapRef.current = map;
+
+      await loadPlayerProfile();
 
       await loadTerritories();
 
@@ -807,15 +851,23 @@ const [distanceFromStart, setDistanceFromStart] =
   const startPoint =
     points[0];
 
-  const endPoint =
-    points[
-      points.length - 1
-    ];
+  if (!location) {
+    setMessage(
+      "Waiting for your current GPS location."
+    );
+
+    return;
+  }
+
+  const currentPoint: GPSPoint = {
+    lat: location.latitude,
+    lng: location.longitude,
+  };
 
   const closingDistance =
     calculateDistanceMeters(
       startPoint,
-      endPoint
+      currentPoint
     );
 
   if (
@@ -830,46 +882,6 @@ const [distanceFromStart, setDistanceFromStart] =
 
     return;
   }
-const [playerColor, setPlayerColor] =
-  useState("#2563EB");
-  async function loadPlayerProfile() {
-  const {
-    data: {
-      user,
-    },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return;
-  }
-
-  const {
-    data,
-    error,
-  } = await supabase
-    .from("profiles")
-    .select(
-      "username, player_color"
-    )
-    .eq(
-      "id",
-      user.id
-    )
-    .single();
-
-  if (error) {
-    console.error(
-      "Unable to load profile:",
-      error
-    );
-
-    return;
-  }
-
-  setPlayerColor(
-    data.player_color
-  );
-}
   // ------------------------------
   // RULE 5
   // Calculate captured area
@@ -943,6 +955,15 @@ if (!saved) {
 
   return;
 }
+
+await loadTerritories();
+
+setMessage(
+  `✅ Territory saved! ${Math.round(
+    area
+  )} m²`
+);
+
   console.log({
     points,
     routeDistance:
@@ -1120,8 +1141,3 @@ if (!saved) {
     </div>
   );
 }
-
-
-
-
-
